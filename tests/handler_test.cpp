@@ -24,6 +24,8 @@ BOOST_AUTO_TEST_SUITE(test_handler)
         handler->addCommand("cmd1");
         handler->addCommand("cmd2");
 
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
         std::ifstream file{name(time)};
         std::stringstream string_stream;
         string_stream << file.rdbuf();
@@ -51,6 +53,8 @@ BOOST_AUTO_TEST_SUITE(test_handler)
         handler->addCommand("cmd2");
         handler->addCommand("{");
 
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
         std::ifstream file{name(time)};
         std::stringstream string_stream;
         string_stream << file.rdbuf();
@@ -65,6 +69,8 @@ BOOST_AUTO_TEST_SUITE(test_handler)
         handler->addCommand("cmd3");
         handler->addCommand("cmd4");
         handler->addCommand("}");
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
         file.open(name(time));
         string_stream << file.rdbuf();
@@ -93,6 +99,8 @@ BOOST_AUTO_TEST_SUITE(test_handler)
         handler->setN(1);
         handler->addCommand("cmd1");
         handler->stop();
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
         std::fstream file{name(time)};
         std::stringstream string_stream;
@@ -146,6 +154,8 @@ BOOST_AUTO_TEST_SUITE(test_handler)
         handler->addCommand("");
         handler->stop();
 
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
         std::fstream file;
         file.open(name(time));
         std::stringstream string_stream;
@@ -175,6 +185,8 @@ BOOST_AUTO_TEST_SUITE(test_handler)
         handler->addCommand("}");
         handler->stop();
 
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
         std::fstream file;
         file.open(name(time));
         std::stringstream string_stream;
@@ -202,6 +214,8 @@ BOOST_AUTO_TEST_SUITE(test_handler)
         handler->addCommand("}");
         handler->addCommand("cmd2");
         handler->stop();
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
         BOOST_CHECK_EQUAL(out_buffer.str(),"bulk: cmd1\nbulk: cmd2\n");
     }

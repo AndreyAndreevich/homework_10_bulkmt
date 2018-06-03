@@ -1,5 +1,9 @@
 #include "Statistics.h"
 
+std::tuple<int,int,int> Counter::get() {
+  return std::make_tuple(lines,commands,blocks);
+}
+
 void Statistics::addLine() {
   if (!_counter.expired())
     _counter.lock()->lines++;
@@ -18,7 +22,6 @@ void Statistics::addCommands(const uint& count) {
 void Statistics::setCounter(const std::weak_ptr<Counter>& counter) {
   _counter = counter;
 }
-
 
 std::ostream& operator<<(std::ostream& out, const Counter& counter) {
     out << counter.name << " поток - ";

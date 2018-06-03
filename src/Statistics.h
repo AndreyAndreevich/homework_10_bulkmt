@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <memory>
+#include <tuple>
 
 class Statistics;
 
@@ -17,6 +18,7 @@ class Counter {
 public:
   Counter() = delete;
   Counter(std::string name_) : name(name_) {} 
+  std::tuple<int,int,int> get();
 };
 
 //--------------------------------------------------------------------------------

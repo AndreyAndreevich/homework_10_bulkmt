@@ -14,12 +14,13 @@ void ConsoleWriter::print() {
   if (_commands.expired()) {
     throw std::runtime_error("commands do not exist");
   }
-  auto commands = _commands.lock();
+  auto commands = *_commands.lock();
   addBlock();
-  addCommands(commands->size());
+  addCommands(commands.size());
+  unlock();
   *out << "bulk: ";
-  for(auto command = commands->cbegin(); command < commands->cend(); command++) {
-    if (command != commands->cbegin())
+  for(auto command = commands.cbegin(); command < commands.cend(); command++) {
+    if (command != commands.cbegin())
       *out << ", ";
     *out << *command;
   }
@@ -63,13 +64,14 @@ void FileWriter::print() {
   if (_commands.expired()) {
     throw std::runtime_error("commands do not exist");
   }
-  auto commands = _commands.lock();
-  addBlock();
-  addCommands(commands->size());
+  auto commands = *_commands.lock();
   file.open(name);
+  addBlock();
+  addCommands(commands.size());
+  unlock();
   file << "bulk: ";
-  for(auto command = commands->cbegin(); command < commands->cend(); command++) {
-    if (command != commands->cbegin())
+  for(auto command = commands.cbegin(); command < commands.cend(); command++) {
+    if (command != commands.cbegin())
       file << ", ";
     file << *command;
   }

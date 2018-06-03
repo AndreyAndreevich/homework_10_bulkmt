@@ -7,14 +7,15 @@ else()
 endif()
 
 find_package(Boost COMPONENTS unit_test_framework REQUIRED)
+find_package(Threads REQUIRED)
 
 include_directories(
         ${CMAKE_SOURCE_DIR}/src
         )
 
 file(GLOB SOURCE ${CMAKE_SOURCE_DIR}/src/*.cpp)
-
 add_executable(${PROJECT_NAME} ${SOURCE} main.cpp)
+target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT})
 
 set(TEST_NAME bulkmt_test)
 file(GLOB TESTS ${CMAKE_SOURCE_DIR}/tests/*.cpp)
@@ -31,9 +32,7 @@ set_target_properties(${TEST_NAME} PROPERTIES
         INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIR} 
         )
 
-target_link_libraries(${TEST_NAME}
-        ${Boost_LIBRARIES}
-        )
+target_link_libraries(${TEST_NAME} ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
 

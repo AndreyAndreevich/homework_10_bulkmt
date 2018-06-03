@@ -5,6 +5,8 @@
 #include <ctime>
 #include <memory>
 #include <sstream>
+#include <chrono>
+#include <thread>
 
 std::string name(const std::weak_ptr<std::time_t>& time, const int& id = 1);
 
