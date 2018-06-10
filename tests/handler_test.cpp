@@ -29,6 +29,8 @@ BOOST_AUTO_TEST_SUITE(test_handler)
         std::ifstream file{name(time)};
         std::stringstream string_stream;
         string_stream << file.rdbuf();
+        file.close();
+        std::remove(name(time).c_str());
 
         BOOST_CHECK_EQUAL(out_buffer.str(),"bulk: cmd1, cmd2\n");
         BOOST_CHECK_EQUAL(string_stream.str(),"bulk: cmd1, cmd2");
@@ -59,6 +61,7 @@ BOOST_AUTO_TEST_SUITE(test_handler)
         std::stringstream string_stream;
         string_stream << file.rdbuf();
         file.close();
+        std::remove(name(time).c_str());
 
         BOOST_CHECK_EQUAL(out_buffer.str(),"bulk: cmd1, cmd2\n");
         BOOST_CHECK_EQUAL(string_stream.str(),"bulk: cmd1, cmd2");
@@ -75,6 +78,7 @@ BOOST_AUTO_TEST_SUITE(test_handler)
         file.open(name(time));
         string_stream << file.rdbuf();
         file.close();
+        std::remove(name(time).c_str());
 
         BOOST_CHECK_EQUAL(out_buffer.str(),"bulk: cmd3, cmd4\n");
         BOOST_CHECK_EQUAL(string_stream.str(),"bulk: cmd3, cmd4");
@@ -106,9 +110,67 @@ BOOST_AUTO_TEST_SUITE(test_handler)
         std::stringstream string_stream;
         string_stream << file.rdbuf();
         file.close();
+        std::remove(name(time).c_str());
 
         BOOST_CHECK_EQUAL(out_buffer.str(),"bulk: cmd1\n");
         BOOST_CHECK_EQUAL(string_stream.str(),"");
+    }
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+    BOOST_AUTO_TEST_CASE(delete_run_writer)
+    {
+        //for (auto i = 0; i < 1000; i++) {
+        std::stringbuf out_buffer;
+        std::ostream out_stream(&out_buffer);
+        auto time = std::make_shared<std::time_t>();
+
+        auto main_counter = std::make_shared<Counter>("main");
+        auto log_counter = std::make_shared<Counter>("log");
+        auto file_counter = std::make_shared<Counter>("file");
+        auto handler = std::make_shared<Handler>();
+        auto consoleWriter = std::make_shared<ConsoleWriter>(out_stream);
+        consoleWriter->subscribe(handler);
+        handler->setCounter(main_counter);
+        consoleWriter->setCounter(log_counter);
+        handler->setN(2);
+        {
+            auto fileWriter = std::make_shared<FileWriter>(time,1);
+            fileWriter->subscribe(handler);
+            fileWriter->setCounter(file_counter);
+            handler->addCommand("cmd1");
+            handler->addCommand("cmd2");
+        }
+        handler->addCommand("cmd3");
+        handler->addCommand("cmd4");
+        handler->addCommand("cmd5");
+        handler->stop();
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+        std::fstream file{name(time)};
+        std::stringstream string_stream;
+        string_stream << file.rdbuf();
+        file.close();
+        std::remove(name(time).c_str());
+        //std::cout << i << "\n";
+        BOOST_CHECK_EQUAL(out_buffer.str(),"bulk: cmd1, cmd2\nbulk: cmd3, cmd4\nbulk: cmd5\n");
+        BOOST_CHECK_EQUAL(string_stream.str(),"bulk: cmd1, cmd2");
+
+        int lines_c,commands_c,blocks_c;
+        std::tie(lines_c,commands_c,blocks_c) = main_counter->get();
+        BOOST_CHECK_EQUAL(lines_c,5);
+        BOOST_CHECK_EQUAL(commands_c,5);
+        BOOST_CHECK_EQUAL(blocks_c,3);
+
+        std::tie(lines_c,commands_c,blocks_c) = log_counter->get();
+        BOOST_CHECK_EQUAL(commands_c,5);
+        BOOST_CHECK_EQUAL(blocks_c,3);
+
+        std::tie(lines_c,commands_c,blocks_c) = file_counter->get();
+        BOOST_CHECK_EQUAL(commands_c,2);
+        BOOST_CHECK_EQUAL(blocks_c,1);
+        //}
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -176,7 +238,7 @@ BOOST_AUTO_TEST_SUITE(test_handler)
 
         auto handler = std::make_shared<Handler>();
         auto consoleWriter = std::shared_ptr<Observer>(new ConsoleWriter(out_stream));
-        auto fileWriter = std::shared_ptr<Observer>(new FileWriter(time));
+        auto fileWriter = std::shared_ptr<Observer>(new FileWriter(time,1));
         consoleWriter->subscribe(handler);
         fileWriter->subscribe(handler);
         

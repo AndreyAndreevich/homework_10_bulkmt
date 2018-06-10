@@ -15,12 +15,11 @@
 
 class Observer;
 
-class Handler : public Statistics {
+class Handler : public Statistics, public std::enable_shared_from_this<Handler> {
   using Commands = std::vector<std::string>;
   using Pending = std::tuple<int,std::condition_variable,std::mutex>;
 
-  std::list<std::weak_ptr<Observer>> writers;
-  std::vector<std::shared_ptr<std::mutex>> mtxs;
+  std::list<std::pair<std::weak_ptr<Observer>,std::shared_ptr<std::mutex>>> writers;
   std::shared_ptr<Commands> commands;
   BlockParser parser;
   int N = 0;
@@ -31,8 +30,10 @@ class Handler : public Statistics {
 
   void print();
   void update();
+  void unlock();
 public:
   Handler();
+  ~Handler();
   void subscribe(const std::weak_ptr<Observer>& obs);
   void setN(const int& n);
   void addCommand(const std::string& command);

@@ -17,7 +17,6 @@ void ConsoleWriter::print() {
   auto commands = *_commands.lock();
   addBlock();
   addCommands(commands.size());
-  unlock();
   *out << "bulk: ";
   for(auto command = commands.cbegin(); command < commands.cend(); command++) {
     if (command != commands.cbegin())
@@ -68,7 +67,6 @@ void FileWriter::print() {
   file.open(name);
   addBlock();
   addCommands(commands.size());
-  unlock();
   file << "bulk: ";
   for(auto command = commands.cbegin(); command < commands.cend(); command++) {
     if (command != commands.cbegin())

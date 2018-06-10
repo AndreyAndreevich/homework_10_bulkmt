@@ -8,58 +8,75 @@ Handler::Handler() {
   cancel_print = std::make_shared<Pending>();
 }
 
+Handler::~Handler() {
+  for (auto& writer : writers) {
+    writer.second->unlock();
+  }
+}
+
 void Handler::print() {
   addBlock();
   addCommands(commands->size());
-  std::get<0>(*cancel_print) = mtxs.size();
-  one_of_print = true;
-  for (auto& mtx : mtxs) {
-    mtx->unlock();
-  }
   std::unique_lock<std::mutex> lk(std::get<2>(*cancel_print));
+  one_of_print = true;
+  std::get<0>(*cancel_print) = writers.size();
+  for (auto& writer : writers) {
+    writer.second->unlock();
+  }
   std::get<1>(*cancel_print).wait(lk,[this]{
     return std::get<0>(*cancel_print) == 0;});
 }
 
 void Handler::update() {
-  for(auto& writer : writers) {
-    if (!writer.expired()) {
-      writer.lock()->update(commands);
-    }/* else {
-      writers.erase(writer);
-    }*/
+  auto iter = writers.begin();
+  while(iter != writers.end()) {
+    if(iter->first.expired()) {
+      iter->second->unlock();
+      auto dIter = iter;
+      iter++;
+      writers.erase(dIter);
+    } else {
+      iter->first.lock()->update(commands);
+      iter++;
+    }
   }
 }
 
-void Handler::subscribe(const std::weak_ptr<Observer>& obs) {
-  if (!obs.expired()) {
-    writers.push_back(obs);
-    auto mtx = std::make_shared<std::mutex>();
-    mtxs.push_back(mtx);
-    mtx->lock();
-    obs.lock()->set_print_cv(cancel_print);
+void Handler::unlock() {
+  std::unique_lock<std::mutex> lk(std::get<2>(*cancel_print));
+  std::get<0>(*cancel_print)--;
+  std::get<1>(*cancel_print).notify_one(); 
+}
 
-    std::thread t([this,obs](std::weak_ptr<std::mutex> mtx){
-      while(!obs.expired()) {       
-        mtx.lock()->lock();
-        if (obs.expired()) {
-          mtx.lock()->unlock();
+void Handler::subscribe(const std::weak_ptr<Observer>& obs) {
+  if (obs.expired()) return;
+  
+  auto mtx = std::make_shared<std::mutex>();
+  mtx->lock();
+  writers.emplace_back(obs,mtx);
+
+  std::thread([obs,mtx](std::weak_ptr<Handler> handler){
+    while(true) { 
+      mtx->lock();
+      auto handler_ptr = handler.lock();
+      {
+        auto observer_ptr = obs.lock();
+        if (obs.expired() || handler.expired()) {
           break;
         }
-        if (dynamic_cast<FileWriter*>(obs.lock().get())) {
-          std::lock_guard<std::mutex> lk(one_of_mtx);
-          if (one_of_print) {
-            one_of_print = false;
-          } else {
-            obs.lock()->unlock();
-            continue;
-          }
+        if (typeid(FileWriter) == typeid(*observer_ptr)) {
+          std::lock_guard<std::mutex> lk(handler_ptr->one_of_mtx);
+          if (handler_ptr->one_of_print) {
+            handler_ptr->one_of_print = false;
+            observer_ptr->print();
+          } 
+        } else {
+          observer_ptr->print();
         }
-        obs.lock()->print();
       }
-    },mtx);
-    t.detach();
-  }
+      handler_ptr->unlock(); 
+    }
+  },shared_from_this()).detach();
 }
 
 void Handler::setN(const int& n) {

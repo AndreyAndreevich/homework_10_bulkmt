@@ -32,6 +32,8 @@ BOOST_AUTO_TEST_SUITE(test_writers)
         std::ifstream file{name(time)};
         std::stringstream string_stream;
         string_stream << file.rdbuf();
+        file.close();
+        std::remove(name(time).c_str());
         BOOST_CHECK_EQUAL(string_stream.str(),"bulk: cmd1");
     }
 
@@ -40,10 +42,11 @@ BOOST_AUTO_TEST_SUITE(test_writers)
     BOOST_AUTO_TEST_CASE(current_time)
     {
         auto time = std::make_shared<std::time_t>();
-        FileWriter writer(time);
+        FileWriter writer(time,1);
         auto commands = std::make_shared<Commands>(Commands{"cmd1"});
         writer.update(commands);
         writer.print();
+        std::remove(name(time).c_str());
         BOOST_CHECK_EQUAL(std::time(nullptr),*time);
     }
 
