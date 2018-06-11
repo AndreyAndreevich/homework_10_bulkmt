@@ -55,7 +55,7 @@ void Handler::subscribe(const std::weak_ptr<Observer>& obs) {
   mtx->lock();
   writers.emplace_back(obs,mtx);
 
-  std::thread([this,obs,mtx](std::weak_ptr<Handler> handler){
+  std::thread([obs,mtx](std::weak_ptr<Handler> handler){
     try {
       while(true) { 
         mtx->lock();
