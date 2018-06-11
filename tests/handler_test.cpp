@@ -3,7 +3,6 @@
 
 #include "../src/Handler.h"
 #include "../src/Writers.h"
-#include "helper.h"
 
 using Commands = std::vector<std::string>;
 
@@ -13,11 +12,10 @@ BOOST_AUTO_TEST_SUITE(test_handler)
     {
         std::stringbuf out_buffer;
         std::ostream out_stream(&out_buffer);
-        auto time = std::make_shared<std::time_t>();
 
         auto handler = std::make_shared<Handler>();
-        auto consoleWriter = std::shared_ptr<Observer>(new ConsoleWriter(out_stream));
-        auto fileWriter = std::shared_ptr<Observer>(new FileWriter(time,1));
+        auto consoleWriter = std::make_shared<ConsoleWriter>(out_stream);
+        auto fileWriter = std::make_shared<FileWriter>();
         consoleWriter->subscribe(handler);
         fileWriter->subscribe(handler);
         handler->setN(2);
@@ -26,11 +24,11 @@ BOOST_AUTO_TEST_SUITE(test_handler)
 
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-        std::ifstream file{name(time)};
+        std::ifstream file{fileWriter->getName()};
         std::stringstream string_stream;
         string_stream << file.rdbuf();
         file.close();
-        std::remove(name(time).c_str());
+        std::remove(fileWriter->getName().c_str());
 
         BOOST_CHECK_EQUAL(out_buffer.str(),"bulk: cmd1, cmd2\n");
         BOOST_CHECK_EQUAL(string_stream.str(),"bulk: cmd1, cmd2");
@@ -42,11 +40,10 @@ BOOST_AUTO_TEST_SUITE(test_handler)
     {
         std::stringbuf out_buffer;
         std::ostream out_stream(&out_buffer);
-        auto time = std::make_shared<std::time_t>();
 
         auto handler = std::make_shared<Handler>();
-        auto consoleWriter = std::shared_ptr<Observer>(new ConsoleWriter(out_stream));
-        auto fileWriter = std::shared_ptr<Observer>(new FileWriter(time,1));
+        auto consoleWriter = std::make_shared<ConsoleWriter>(out_stream);
+        auto fileWriter = std::make_shared<FileWriter>();
         consoleWriter->subscribe(handler);
         fileWriter->subscribe(handler);
 
@@ -57,11 +54,11 @@ BOOST_AUTO_TEST_SUITE(test_handler)
 
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-        std::ifstream file{name(time)};
+        std::ifstream file{fileWriter->getName()};
         std::stringstream string_stream;
         string_stream << file.rdbuf();
         file.close();
-        std::remove(name(time).c_str());
+        std::remove(fileWriter->getName().c_str());
 
         BOOST_CHECK_EQUAL(out_buffer.str(),"bulk: cmd1, cmd2\n");
         BOOST_CHECK_EQUAL(string_stream.str(),"bulk: cmd1, cmd2");
@@ -75,10 +72,10 @@ BOOST_AUTO_TEST_SUITE(test_handler)
 
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-        file.open(name(time));
+        file.open(fileWriter->getName());
         string_stream << file.rdbuf();
         file.close();
-        std::remove(name(time).c_str());
+        std::remove(fileWriter->getName().c_str());
 
         BOOST_CHECK_EQUAL(out_buffer.str(),"bulk: cmd3, cmd4\n");
         BOOST_CHECK_EQUAL(string_stream.str(),"bulk: cmd3, cmd4");
@@ -90,14 +87,13 @@ BOOST_AUTO_TEST_SUITE(test_handler)
     {
         std::stringbuf out_buffer;
         std::ostream out_stream(&out_buffer);
-        auto time = std::make_shared<std::time_t>();
 
         auto handler = std::make_shared<Handler>();
         {
-            auto fileWriter = std::shared_ptr<Observer>(new FileWriter(time,1));
+            auto fileWriter = std::make_shared<FileWriter>();
             fileWriter->subscribe(handler);
         }
-        auto consoleWriter = std::shared_ptr<Observer>(new ConsoleWriter(out_stream));
+        auto consoleWriter = std::make_shared<ConsoleWriter>(out_stream);
         consoleWriter->subscribe(handler);
         
         handler->setN(1);
@@ -106,71 +102,71 @@ BOOST_AUTO_TEST_SUITE(test_handler)
 
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-        std::fstream file{name(time)};
-        std::stringstream string_stream;
-        string_stream << file.rdbuf();
-        file.close();
-        std::remove(name(time).c_str());
-
         BOOST_CHECK_EQUAL(out_buffer.str(),"bulk: cmd1\n");
-        BOOST_CHECK_EQUAL(string_stream.str(),"");
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
     BOOST_AUTO_TEST_CASE(delete_run_writer)
     {
-        //for (auto i = 0; i < 1000; i++) {
-        std::stringbuf out_buffer;
-        std::ostream out_stream(&out_buffer);
-        auto time = std::make_shared<std::time_t>();
-
-        auto main_counter = std::make_shared<Counter>("main");
-        auto log_counter = std::make_shared<Counter>("log");
-        auto file_counter = std::make_shared<Counter>("file");
-        auto handler = std::make_shared<Handler>();
-        auto consoleWriter = std::make_shared<ConsoleWriter>(out_stream);
-        consoleWriter->subscribe(handler);
-        handler->setCounter(main_counter);
-        consoleWriter->setCounter(log_counter);
-        handler->setN(2);
+#ifdef ALL_TESTS
+        std::cout << "Starting a recurring test (" << N_DELETED << "): test_handler - delete_run_writer" << "\n";
+        for (auto i = 0; i < N_DELETED; i++) 
+#endif
         {
-            auto fileWriter = std::make_shared<FileWriter>(time,1);
-            fileWriter->subscribe(handler);
-            fileWriter->setCounter(file_counter);
-            handler->addCommand("cmd1");
-            handler->addCommand("cmd2");
+            std::stringbuf out_buffer;
+            std::ostream out_stream(&out_buffer);
+
+            auto main_counter = std::make_shared<Counter>("main");
+            auto log_counter = std::make_shared<Counter>("log");
+            auto file_counter = std::make_shared<Counter>("file");
+            auto handler = std::make_shared<Handler>();
+            auto consoleWriter = std::make_shared<ConsoleWriter>(out_stream);
+            consoleWriter->subscribe(handler);
+            handler->setCounter(main_counter);
+            consoleWriter->setCounter(log_counter);
+            handler->setN(2);
+            std::string name;
+            {
+                auto fileWriter = std::make_shared<FileWriter>();
+                fileWriter->subscribe(handler);
+                fileWriter->setCounter(file_counter);
+                handler->addCommand("cmd1");
+                handler->addCommand("cmd2");
+                name = fileWriter->getName();
+            }
+            handler->addCommand("cmd3");
+            handler->addCommand("cmd4");
+            handler->addCommand("cmd5");
+            handler->stop();
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+            std::fstream file{name};
+            std::stringstream string_stream;
+            string_stream << file.rdbuf();
+            file.close();
+            std::remove(name.c_str());
+#ifdef ALL_TESTS
+        std::cout << i << ":" << N_DELETED << " (test_handler - delete_run_writer)\n";
+#endif
+            BOOST_CHECK_EQUAL(out_buffer.str(),"bulk: cmd1, cmd2\nbulk: cmd3, cmd4\nbulk: cmd5\n");
+            BOOST_CHECK_EQUAL(string_stream.str(),"bulk: cmd1, cmd2");
+
+            int lines_c,commands_c,blocks_c;
+            std::tie(lines_c,commands_c,blocks_c) = main_counter->get();
+            BOOST_CHECK_EQUAL(lines_c,5);
+            BOOST_CHECK_EQUAL(commands_c,5);
+            BOOST_CHECK_EQUAL(blocks_c,3);
+
+            std::tie(lines_c,commands_c,blocks_c) = log_counter->get();
+            BOOST_CHECK_EQUAL(commands_c,5);
+            BOOST_CHECK_EQUAL(blocks_c,3);
+
+            std::tie(lines_c,commands_c,blocks_c) = file_counter->get();
+            BOOST_CHECK_EQUAL(commands_c,2);
+            BOOST_CHECK_EQUAL(blocks_c,1);
         }
-        handler->addCommand("cmd3");
-        handler->addCommand("cmd4");
-        handler->addCommand("cmd5");
-        handler->stop();
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
-        std::fstream file{name(time)};
-        std::stringstream string_stream;
-        string_stream << file.rdbuf();
-        file.close();
-        std::remove(name(time).c_str());
-        //std::cout << i << "\n";
-        BOOST_CHECK_EQUAL(out_buffer.str(),"bulk: cmd1, cmd2\nbulk: cmd3, cmd4\nbulk: cmd5\n");
-        BOOST_CHECK_EQUAL(string_stream.str(),"bulk: cmd1, cmd2");
-
-        int lines_c,commands_c,blocks_c;
-        std::tie(lines_c,commands_c,blocks_c) = main_counter->get();
-        BOOST_CHECK_EQUAL(lines_c,5);
-        BOOST_CHECK_EQUAL(commands_c,5);
-        BOOST_CHECK_EQUAL(blocks_c,3);
-
-        std::tie(lines_c,commands_c,blocks_c) = log_counter->get();
-        BOOST_CHECK_EQUAL(commands_c,5);
-        BOOST_CHECK_EQUAL(blocks_c,3);
-
-        std::tie(lines_c,commands_c,blocks_c) = file_counter->get();
-        BOOST_CHECK_EQUAL(commands_c,2);
-        BOOST_CHECK_EQUAL(blocks_c,1);
-        //}
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -203,11 +199,10 @@ BOOST_AUTO_TEST_SUITE(test_handler)
     {
         std::stringbuf out_buffer;
         std::ostream out_stream(&out_buffer);
-        auto time = std::make_shared<std::time_t>();
 
         auto handler = std::make_shared<Handler>();
-        auto consoleWriter = std::shared_ptr<Observer>(new ConsoleWriter(out_stream));
-        auto fileWriter = std::shared_ptr<Observer>(new FileWriter(time,1));
+        auto consoleWriter = std::make_shared<ConsoleWriter>(out_stream);
+        auto fileWriter = std::make_shared<FileWriter>();
         consoleWriter->subscribe(handler);
         fileWriter->subscribe(handler);
         
@@ -219,10 +214,11 @@ BOOST_AUTO_TEST_SUITE(test_handler)
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
         std::fstream file;
-        file.open(name(time));
+        file.open(fileWriter->getName());
         std::stringstream string_stream;
         string_stream << file.rdbuf();
         file.close();
+        std::remove(fileWriter->getName().c_str());
 
         BOOST_CHECK_EQUAL(out_buffer.str(),"bulk: , \n");
         BOOST_CHECK_EQUAL(out_buffer.str(),"bulk: , \n"); 
@@ -234,11 +230,10 @@ BOOST_AUTO_TEST_SUITE(test_handler)
     {
         std::stringbuf out_buffer;
         std::ostream out_stream(&out_buffer);
-        auto time = std::make_shared<std::time_t>();
 
         auto handler = std::make_shared<Handler>();
-        auto consoleWriter = std::shared_ptr<Observer>(new ConsoleWriter(out_stream));
-        auto fileWriter = std::shared_ptr<Observer>(new FileWriter(time,1));
+        auto consoleWriter = std::make_shared<ConsoleWriter>(out_stream);
+        auto fileWriter = std::make_shared<FileWriter>();
         consoleWriter->subscribe(handler);
         fileWriter->subscribe(handler);
         
@@ -250,7 +245,7 @@ BOOST_AUTO_TEST_SUITE(test_handler)
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
         std::fstream file;
-        file.open(name(time));
+        file.open(fileWriter->getName());
         std::stringstream string_stream;
         string_stream << file.rdbuf();
         file.close();
@@ -267,7 +262,7 @@ BOOST_AUTO_TEST_SUITE(test_handler)
         std::ostream out_stream(&out_buffer);
 
         auto handler = std::make_shared<Handler>();
-        auto consoleWriter = std::shared_ptr<Observer>(new ConsoleWriter(out_stream));
+        auto consoleWriter = std::make_shared<ConsoleWriter>(out_stream);
         consoleWriter->subscribe(handler);
         
         handler->setN(2);

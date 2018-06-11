@@ -35,16 +35,6 @@ FileWriter::FileWriter() {
   id = count;
 }
 
-FileWriter::FileWriter(std::weak_ptr<std::time_t> time_, const int& id_) {
-  if (id_) {
-    id = id_;
-  } else {
-    count++;
-    id = count;
-  }
-  time = time_;
-}
-
 void FileWriter::update(const std::weak_ptr<Commands>& commands) {
   if (commands.expired()) {
     throw std::runtime_error("commands do not exist");
@@ -52,8 +42,18 @@ void FileWriter::update(const std::weak_ptr<Commands>& commands) {
   if (commands.lock()->size() == 1) {
     std::stringbuf out_buffer;
     std::ostream out_stream(&out_buffer);
-    std::time_t* time_ = time.expired() ? nullptr : time.lock().get();
-    out_stream << "bulk:" << id << ":" << std::time(time_) << ".log";
+    auto time_ = time;
+    auto current_time = std::time(&time);
+    if (time_ == current_time) {
+      section++;
+    } else {
+      section = 0;
+    }
+    out_stream << "bulk:" << id << ":" ;
+    if (section) {
+      out_stream << section << ":";
+    }
+    out_stream << current_time << ".log";
     name = out_buffer.str();
   }
   Observer::update(commands);
@@ -74,4 +74,12 @@ void FileWriter::print() {
     file << *command;
   }
   file.close();
+}
+
+std::string FileWriter::getName() {
+  return name;
+}
+
+std::time_t FileWriter::getTime() {
+  return time;
 }

@@ -6,8 +6,8 @@ else()
         project(bulkmt VERSION 0.0.1)  
 endif()
 
-find_package(Boost COMPONENTS unit_test_framework REQUIRED)
-find_package(Threads REQUIRED)
+find_package(Boost COMPONENTS unit_test_framework REQUIRED QUIET)
+find_package(Threads REQUIRED QUIET)
 
 include_directories(
         ${CMAKE_SOURCE_DIR}/src
@@ -28,7 +28,7 @@ set_target_properties(${PROJECT_NAME} ${TEST_NAME} PROPERTIES
         )
 
 set_target_properties(${TEST_NAME} PROPERTIES
-        COMPILE_DEFINITIONS BOOST_TEST_DYN_LINK 
+        COMPILE_DEFINITIONS BOOST_TEST_DYN_LINK
         INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIR} 
         )
 
@@ -45,6 +45,15 @@ set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
 set(CPACK_PACKAGE_CONTACT l.a.r.p@yandex.ru)
 
 include(CPack)
+
+option(ALL_TESTS "Запукает повторяющиеся тесты" OFF)
+message(STATUS "ALL_TESTS: ${ALL_TESTS}")
+
+if (${ALL_TESTS}) 
+        add_definitions(-DALL_TESTS)
+        add_definitions(-DN_DELETED=1000)
+        add_definitions(-DN_REPEAT=10000)
+endif()
 
 enable_testing()
 

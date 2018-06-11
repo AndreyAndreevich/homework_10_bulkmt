@@ -3,7 +3,6 @@
 
 #include "../src/Handler.h"
 #include "../src/Writers.h"
-#include "helper.h"
 
 using Commands = std::vector<std::string>;
 
@@ -72,12 +71,11 @@ BOOST_AUTO_TEST_SUITE(test_counter)
     {
         std::stringbuf out_buffer;
         std::ostream out_stream(&out_buffer);
-        auto time = std::make_shared<std::time_t>();
 
         auto console_counter = std::make_shared<Counter>("console");
         auto file_counter = std::make_shared<Counter>("file");
         ConsoleWriter console_writer(out_stream);
-        FileWriter file_writer(time,1);
+        FileWriter file_writer;
         console_writer.setCounter(console_counter);
         file_writer.setCounter(file_counter);
 
@@ -86,7 +84,7 @@ BOOST_AUTO_TEST_SUITE(test_counter)
         file_writer.update(commands);
         console_writer.print();
         file_writer.print();
-        std::remove(name(time).c_str());
+        std::remove(file_writer.getName().c_str());
 
         int lines_c,commands_c,blocks_c;
         std::tie(lines_c,commands_c,blocks_c) = console_counter->get();

@@ -17,14 +17,16 @@ class Observer;
 
 class Handler : public Statistics, public std::enable_shared_from_this<Handler> {
   using Commands = std::vector<std::string>;
-  using Pending = std::tuple<int,std::condition_variable,std::mutex>;
 
   std::list<std::pair<std::weak_ptr<Observer>,std::shared_ptr<std::mutex>>> writers;
   std::shared_ptr<Commands> commands;
   BlockParser parser;
   int N = 0;
 
-  std::shared_ptr<Pending> cancel_print;
+  int job_count;
+  std::condition_variable cv;
+  std::mutex mtx;
+
   std::atomic<bool> one_of_print;
   std::mutex one_of_mtx;
 

@@ -5,7 +5,6 @@
 
 Handler::Handler() {
   commands = std::make_shared<Commands>();
-  cancel_print = std::make_shared<Pending>();
 }
 
 Handler::~Handler() {
@@ -17,14 +16,15 @@ Handler::~Handler() {
 void Handler::print() {
   addBlock();
   addCommands(commands->size());
-  std::unique_lock<std::mutex> lk(std::get<2>(*cancel_print));
+  cv.notify_all();
+  std::unique_lock<std::mutex> lk(mtx);
   one_of_print = true;
-  std::get<0>(*cancel_print) = writers.size();
+  job_count = writers.size();
   for (auto& writer : writers) {
     writer.second->unlock();
   }
-  std::get<1>(*cancel_print).wait(lk,[this]{
-    return std::get<0>(*cancel_print) == 0;});
+  cv.wait(lk,[this]{
+    return job_count == 0;});
 }
 
 void Handler::update() {
@@ -43,9 +43,9 @@ void Handler::update() {
 }
 
 void Handler::unlock() {
-  std::unique_lock<std::mutex> lk(std::get<2>(*cancel_print));
-  std::get<0>(*cancel_print)--;
-  std::get<1>(*cancel_print).notify_one(); 
+  std::unique_lock<std::mutex> lk(mtx);
+  job_count--;
+  cv.notify_one(); 
 }
 
 void Handler::subscribe(const std::weak_ptr<Observer>& obs) {
@@ -55,26 +55,30 @@ void Handler::subscribe(const std::weak_ptr<Observer>& obs) {
   mtx->lock();
   writers.emplace_back(obs,mtx);
 
-  std::thread([obs,mtx](std::weak_ptr<Handler> handler){
-    while(true) { 
-      mtx->lock();
-      auto handler_ptr = handler.lock();
-      {
-        auto observer_ptr = obs.lock();
-        if (obs.expired() || handler.expired()) {
-          break;
-        }
-        if (typeid(FileWriter) == typeid(*observer_ptr)) {
-          std::lock_guard<std::mutex> lk(handler_ptr->one_of_mtx);
-          if (handler_ptr->one_of_print) {
-            handler_ptr->one_of_print = false;
+  std::thread([this,obs,mtx](std::weak_ptr<Handler> handler){
+    try {
+      while(true) { 
+        mtx->lock();
+        auto handler_ptr = handler.lock();
+        {
+          auto observer_ptr = obs.lock();
+          if (obs.expired() || handler.expired()) {
+            break;
+          }
+          if (typeid(FileWriter) == typeid(*observer_ptr)) {
+            std::lock_guard<std::mutex> lk(handler_ptr->one_of_mtx);
+            if (handler_ptr->one_of_print) {
+              handler_ptr->one_of_print = false;
+              observer_ptr->print();
+            } 
+          } else {
             observer_ptr->print();
-          } 
-        } else {
-          observer_ptr->print();
+          }
         }
+        handler_ptr->unlock(); 
       }
-      handler_ptr->unlock(); 
+    } catch(const std::exception &e) {
+      std::cerr << e.what() << " in " << std::this_thread::get_id() << std::endl;
     }
   },shared_from_this()).detach();
 }
