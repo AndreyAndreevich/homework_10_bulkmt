@@ -5,6 +5,7 @@
 
 Handler::Handler() {
   commands = std::make_shared<Commands>();
+  error.first = false;
 }
 
 Handler::~Handler() {
@@ -24,6 +25,10 @@ void Handler::print() {
     writer.second->unlock();
   }
   cv.wait(lk,[this]{
+    if (error.first) {
+      std::unique_lock<std::mutex> lk(error_mtx);
+      throw std::runtime_error(error.second);
+    }
     return job_count == 0;});
 }
 
@@ -54,7 +59,6 @@ void Handler::subscribe(const std::weak_ptr<Observer>& obs) {
   auto mtx = std::make_shared<std::mutex>();
   mtx->lock();
   writers.emplace_back(obs,mtx);
-
   std::thread([obs,mtx](std::weak_ptr<Handler> handler){
     try {
       while(true) { 
@@ -75,10 +79,22 @@ void Handler::subscribe(const std::weak_ptr<Observer>& obs) {
             observer_ptr->print();
           }
         }
-        handler_ptr->unlock(); 
+        if (!handler.expired()) {
+          handler_ptr->unlock();
+        }
       }
     } catch(const std::exception &e) {
-      std::cerr << e.what() << " in " << std::this_thread::get_id() << std::endl;
+      auto handler_ptr = handler.lock();
+      if (!handler.expired()) {
+        std::stringstream error_stream;
+        error_stream << e.what() << " in " << std::this_thread::get_id();
+        {
+          std::unique_lock<std::mutex> lk(handler_ptr->error_mtx);
+          handler_ptr->error.second = error_stream.str();
+          handler_ptr->error.first = true;
+        }
+        handler_ptr->unlock();
+      }
     }
   },shared_from_this()).detach();
 }

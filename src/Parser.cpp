@@ -7,7 +7,7 @@ int start_parsing(int argc, char *argv[]) {
     throw std::runtime_error("The parameter is missing");
   }
   auto N = std::atoi(argv[1]);
-  if (N == 0) {
+  if (N <= 0 || std::string(argv[1]) != std::to_string(N)) {
     throw std::runtime_error("Incorrect parameter");
   }
   return N;

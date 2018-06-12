@@ -23,10 +23,10 @@ add_executable(${TEST_NAME} ${SOURCE} ${TESTS})
 
 set_target_properties(${PROJECT_NAME} ${TEST_NAME} PROPERTIES
         CXX_STANDARD 14
-        CXX_STANDARD_REQUIRED ON
+        CXX_STANDARD_REQUIRED ON   
         COMPILE_OPTIONS -Wpedantic -Wall -Wextra
         )
-
+#set(CMAKE_CXX_FLAGS "-fsanitize=thread")
 set_target_properties(${TEST_NAME} PROPERTIES
         COMPILE_DEFINITIONS BOOST_TEST_DYN_LINK
         INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIR} 

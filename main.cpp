@@ -28,12 +28,12 @@ int main(int argc, char *argv[])
       handler->addCommand(line);
     }
     handler->stop();
+    std::cout << *main_counter << "\n"
+              << *log_counter << "\n"
+              << *file1_counter << "\n"
+              << *file2_counter << std::endl;
   } catch(const std::exception &e) {
     std::cerr << e.what() << std::endl;
   }
-  std::cout << *main_counter << "\n"
-            << *log_counter << "\n"
-            << *file1_counter << "\n"
-            << *file2_counter << std::endl;
   return 0;
 }

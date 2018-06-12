@@ -18,9 +18,13 @@ BOOST_AUTO_TEST_SUITE(test_parser)
         BOOST_CHECK_THROW(start_parsing(2,argv),std::exception);
         argv[1] = "0";
         BOOST_CHECK_THROW(start_parsing(2,argv),std::exception);
+        argv[1] = "-1";
+        BOOST_CHECK_THROW(start_parsing(2,argv),std::exception);
         argv[1] = "asd4";
         BOOST_CHECK_THROW(start_parsing(2,argv),std::exception);
         argv[1] = "4fd";
+        BOOST_CHECK_THROW(start_parsing(10,argv),std::exception);
+        argv[1] = "4";
         BOOST_CHECK_EQUAL(start_parsing(10,argv),4);
     }
 

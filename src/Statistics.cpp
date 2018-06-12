@@ -26,8 +26,8 @@ void Statistics::setCounter(const std::weak_ptr<Counter>& counter) {
 std::ostream& operator<<(std::ostream& out, const Counter& counter) {
     out << counter.name << " поток - ";
     if (counter.lines) {
-      out << counter.lines << ", ";
+      out << "строк: " << counter.lines << ", ";
     }
-    out << counter.commands << ", " << counter.blocks;
+    out << "комманд: " << counter.commands << ", блоков: " << counter.blocks;
     return out;
 }

@@ -49,10 +49,9 @@ void FileWriter::update(const std::weak_ptr<Commands>& commands) {
     } else {
       section = 0;
     }
-    out_stream << "bulk:" << id << ":" ;
-    if (section) {
-      out_stream << section << ":";
-    }
+    out_stream << "bulk_" << id << "_" ;
+    out_stream << section << "_";
+    out_stream << std::this_thread::get_id() << "_";
     out_stream << current_time << ".log";
     name = out_buffer.str();
   }
@@ -65,6 +64,9 @@ void FileWriter::print() {
   }
   auto commands = *_commands.lock();
   file.open(name);
+  if (!file.is_open()) {
+    throw std::runtime_error("error opening the file");
+  }
   addBlock();
   addCommands(commands.size());
   file << "bulk: ";
@@ -74,6 +76,9 @@ void FileWriter::print() {
     file << *command;
   }
   file.close();
+  if(file.fail()) {
+    throw std::runtime_error("error writing to file");
+  }
 }
 
 std::string FileWriter::getName() {

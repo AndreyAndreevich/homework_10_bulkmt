@@ -17,7 +17,6 @@ class Observer;
 
 class Handler : public Statistics, public std::enable_shared_from_this<Handler> {
   using Commands = std::vector<std::string>;
-
   std::list<std::pair<std::weak_ptr<Observer>,std::shared_ptr<std::mutex>>> writers;
   std::shared_ptr<Commands> commands;
   BlockParser parser;
@@ -30,6 +29,10 @@ class Handler : public Statistics, public std::enable_shared_from_this<Handler> 
   std::atomic<bool> one_of_print;
   std::mutex one_of_mtx;
 
+  std::pair<bool,std::string> error;
+  std::mutex error_mtx;
+
+protected:
   void print();
   void update();
   void unlock();

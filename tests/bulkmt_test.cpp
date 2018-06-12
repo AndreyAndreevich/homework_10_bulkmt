@@ -429,4 +429,31 @@ BOOST_AUTO_TEST_SUITE(test_bulkmt)
         BOOST_CHECK_EQUAL(blocks_c,4);
     }
 
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+    BOOST_AUTO_TEST_CASE(exception_in_thread)
+    {
+        struct TestHandler : public Handler {
+            void test_print() {
+                print();
+            }
+        };
+#ifdef ALL_TESTS
+        std::cout << "Starting a recurring test (" << N_REPEAT <<"): test_bulkmt - exception_in_thread " << "\n";
+        for (auto i = 0; i < N_REPEAT; i++)
+#endif
+        {
+            auto handler = std::make_shared<TestHandler>();
+            auto console_writer1 = std::make_shared<ConsoleWriter>();
+            auto console_writer2 = std::make_shared<ConsoleWriter>();
+            console_writer1->subscribe(handler);
+            console_writer2->subscribe(handler);
+            handler->setN(1);
+#ifdef ALL_TESTS
+            std::cout << i << ":" << N_REPEAT << " (test_bulkmt - repeat)\n";
+#endif
+            BOOST_CHECK_THROW(handler->test_print(),std::exception);
+        }
+    }
+
 BOOST_AUTO_TEST_SUITE_END()

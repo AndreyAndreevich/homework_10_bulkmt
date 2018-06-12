@@ -21,7 +21,7 @@ public:
 class FileWriter : public Observer, public Statistics {
   static int count;
   int id;
-  int section;
+  int section = 0;
   std::ofstream file;
   std::time_t time;
   std::string name;

@@ -69,4 +69,14 @@ BOOST_AUTO_TEST_SUITE(test_writers)
         BOOST_CHECK_THROW(writer.print(),std::exception);
     }
 
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+    BOOST_AUTO_TEST_CASE(error_open_file)
+    {
+        FileWriter file_writer;
+        auto commands = std::make_shared<Commands>(Commands{"cmd1","cmd2"});
+        file_writer.update(commands);
+        BOOST_CHECK_THROW(file_writer.print(),std::exception);
+    }
+
 BOOST_AUTO_TEST_SUITE_END()

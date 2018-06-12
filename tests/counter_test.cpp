@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_SUITE(test_counter)
         std::stringbuf out_buffer1;
         std::ostream out_stream(&out_buffer1);
         out_stream << *counter;
-        BOOST_CHECK_EQUAL(out_buffer1.str(),"simple поток - 3, 1");
+        BOOST_CHECK_EQUAL(out_buffer1.str(),"simple поток - комманд: 3, блоков: 1");
 
         worker.addLine();
         worker.addLine();
@@ -62,15 +62,14 @@ BOOST_AUTO_TEST_SUITE(test_counter)
         std::stringbuf out_buffer2;
         out_stream.rdbuf(&out_buffer2);
         out_stream << *counter;
-        BOOST_CHECK_EQUAL(out_buffer2.str(),"simple поток - 10, 8, 2");
+        BOOST_CHECK_EQUAL(out_buffer2.str(),"simple поток - строк: 10, комманд: 8, блоков: 2");
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
     BOOST_AUTO_TEST_CASE(writers_counter)
     {
-        std::stringbuf out_buffer;
-        std::ostream out_stream(&out_buffer);
+        std::stringstream out_stream;
 
         auto console_counter = std::make_shared<Counter>("console");
         auto file_counter = std::make_shared<Counter>("file");
@@ -79,11 +78,15 @@ BOOST_AUTO_TEST_SUITE(test_counter)
         console_writer.setCounter(console_counter);
         file_writer.setCounter(file_counter);
 
-        auto commands = std::make_shared<Commands>(Commands{"cmd1", "cmd2"});
+        auto commands = std::make_shared<Commands>(Commands{"cmd1"});
+        console_writer.update(commands);
+        file_writer.update(commands);
+        commands->push_back(std::string{"cmd2"});
         console_writer.update(commands);
         file_writer.update(commands);
         console_writer.print();
         file_writer.print();
+        
         std::remove(file_writer.getName().c_str());
 
         int lines_c,commands_c,blocks_c;
@@ -155,7 +158,7 @@ BOOST_AUTO_TEST_SUITE(test_counter)
         std::ostream out_stream(&out_buffer);
         out_stream << *counter;
         
-        BOOST_CHECK_EQUAL(out_buffer.str(),"main поток - 10, 6, 1");
+        BOOST_CHECK_EQUAL(out_buffer.str(),"main поток - строк: 10, комманд: 6, блоков: 1");
     }
 
 BOOST_AUTO_TEST_SUITE_END()

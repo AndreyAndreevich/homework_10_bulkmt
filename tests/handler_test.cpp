@@ -171,6 +171,57 @@ BOOST_AUTO_TEST_SUITE(test_handler)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
+    BOOST_AUTO_TEST_CASE(delete_handler)
+    {
+#ifdef ALL_TESTS
+        std::cout << "Starting a recurring test (" << N_DELETED << "): test_handler - delete_handler" << "\n";
+        for (auto i = 0; i < N_DELETED; i++) 
+#endif
+        {
+            std::stringstream out_stream1;
+            std::stringstream out_stream2;
+
+            auto main_counter = std::make_shared<Counter>("main");
+            auto log_counter1 = std::make_shared<Counter>("log1");
+            auto log_counter2 = std::make_shared<Counter>("log2");
+            auto console_writer1 = std::make_shared<ConsoleWriter>(out_stream1);
+            auto console_writer2 = std::make_shared<ConsoleWriter>(out_stream2);           
+            console_writer1->setCounter(log_counter1);
+            console_writer2->setCounter(log_counter2);
+            {
+                auto handler = std::make_shared<Handler>();
+                handler->setCounter(main_counter);
+                console_writer1->subscribe(handler);
+                console_writer2->subscribe(handler);
+                handler->setN(1);
+                handler->addCommand("cmd1");
+                handler->addCommand("cmd2");
+            }
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+#ifdef ALL_TESTS
+        std::cout << i << ":" << N_DELETED << " (test_handler - delete_handler)\n";
+#endif
+
+            int lines_c,commands_c,blocks_c;
+            std::tie(lines_c,commands_c,blocks_c) = main_counter->get();
+            BOOST_CHECK_EQUAL(lines_c,2);
+            BOOST_CHECK_EQUAL(commands_c,2);
+            BOOST_CHECK_EQUAL(blocks_c,2);
+
+            std::tie(lines_c,commands_c,blocks_c) = log_counter1->get();
+            BOOST_CHECK_EQUAL(commands_c,2);
+            BOOST_CHECK_EQUAL(blocks_c,2);
+
+            std::tie(lines_c,commands_c,blocks_c) = log_counter2->get();
+            BOOST_CHECK_EQUAL(commands_c,2);
+            BOOST_CHECK_EQUAL(blocks_c,2);
+        }
+    }
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
     BOOST_AUTO_TEST_CASE(large_string)
     {
         Handler handler;
