@@ -3,7 +3,11 @@
 
 #include <algorithm>
 
-Handler::Handler() {
+Handler::Handler(const int& n) {
+  if (n <= 0) {
+    throw std::runtime_error("error set N"); 
+  } 
+  N = n;
   commands = std::make_shared<Commands>();
   error.first = false;
 }
@@ -97,14 +101,6 @@ void Handler::subscribe(const std::weak_ptr<Observer>& obs) {
       }
     }
   },shared_from_this()).detach();
-}
-
-void Handler::setN(const int& n) {
-  int size = commands->size();
-  if (n < size) {
-    throw std::runtime_error("error set N"); 
-  } 
-  N = n;
 }
 
 void Handler::addCommand(const std::string& command) { 

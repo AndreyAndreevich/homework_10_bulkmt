@@ -131,10 +131,9 @@ BOOST_AUTO_TEST_SUITE(test_counter)
     BOOST_AUTO_TEST_CASE(handle_counter)
     {
         auto counter = std::make_shared<Counter>("main");
-        Handler handler;
+        Handler handler(5);
         handler.setCounter(counter);
 
-        handler.setN(5);
         handler.addCommand("{");
         handler.addCommand("cmd1");
         handler.addCommand("cmd2");

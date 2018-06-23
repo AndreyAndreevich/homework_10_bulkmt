@@ -37,10 +37,9 @@ protected:
   void update();
   void unlock();
 public:
-  Handler();
+  Handler(const int& n);
   ~Handler();
   void subscribe(const std::weak_ptr<Observer>& obs);
-  void setN(const int& n);
   void addCommand(const std::string& command);
   void stop();
 };

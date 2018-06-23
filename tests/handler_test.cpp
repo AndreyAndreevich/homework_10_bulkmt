@@ -13,12 +13,11 @@ BOOST_AUTO_TEST_SUITE(test_handler)
         std::stringbuf out_buffer;
         std::ostream out_stream(&out_buffer);
 
-        auto handler = std::make_shared<Handler>();
+        auto handler = std::make_shared<Handler>(2);
         auto consoleWriter = std::make_shared<ConsoleWriter>(out_stream);
         auto fileWriter = std::make_shared<FileWriter>();
         consoleWriter->subscribe(handler);
         fileWriter->subscribe(handler);
-        handler->setN(2);
         handler->addCommand("cmd1");
         handler->addCommand("cmd2");
 
@@ -41,13 +40,12 @@ BOOST_AUTO_TEST_SUITE(test_handler)
         std::stringbuf out_buffer;
         std::ostream out_stream(&out_buffer);
 
-        auto handler = std::make_shared<Handler>();
+        auto handler = std::make_shared<Handler>(5);
         auto consoleWriter = std::make_shared<ConsoleWriter>(out_stream);
         auto fileWriter = std::make_shared<FileWriter>();
         consoleWriter->subscribe(handler);
         fileWriter->subscribe(handler);
 
-        handler->setN(5);
         handler->addCommand("cmd1");
         handler->addCommand("cmd2");
         handler->addCommand("{");
@@ -88,7 +86,7 @@ BOOST_AUTO_TEST_SUITE(test_handler)
         std::stringbuf out_buffer;
         std::ostream out_stream(&out_buffer);
 
-        auto handler = std::make_shared<Handler>();
+        auto handler = std::make_shared<Handler>(1);
         {
             auto fileWriter = std::make_shared<FileWriter>();
             fileWriter->subscribe(handler);
@@ -96,7 +94,6 @@ BOOST_AUTO_TEST_SUITE(test_handler)
         auto consoleWriter = std::make_shared<ConsoleWriter>(out_stream);
         consoleWriter->subscribe(handler);
         
-        handler->setN(1);
         handler->addCommand("cmd1");
         handler->stop();
 
@@ -120,12 +117,11 @@ BOOST_AUTO_TEST_SUITE(test_handler)
             auto main_counter = std::make_shared<Counter>("main");
             auto log_counter = std::make_shared<Counter>("log");
             auto file_counter = std::make_shared<Counter>("file");
-            auto handler = std::make_shared<Handler>();
+            auto handler = std::make_shared<Handler>(2);
             auto consoleWriter = std::make_shared<ConsoleWriter>(out_stream);
             consoleWriter->subscribe(handler);
             handler->setCounter(main_counter);
             consoleWriter->setCounter(log_counter);
-            handler->setN(2);
             std::string name;
             {
                 auto fileWriter = std::make_shared<FileWriter>();
@@ -189,11 +185,10 @@ BOOST_AUTO_TEST_SUITE(test_handler)
             console_writer1->setCounter(log_counter1);
             console_writer2->setCounter(log_counter2);
             {
-                auto handler = std::make_shared<Handler>();
+                auto handler = std::make_shared<Handler>(1);
                 handler->setCounter(main_counter);
                 console_writer1->subscribe(handler);
                 console_writer2->subscribe(handler);
-                handler->setN(1);
                 handler->addCommand("cmd1");
                 handler->addCommand("cmd2");
             }
@@ -224,8 +219,7 @@ BOOST_AUTO_TEST_SUITE(test_handler)
 
     BOOST_AUTO_TEST_CASE(large_string)
     {
-        Handler handler;
-        handler.setN(4);
+        Handler handler(4);
         BOOST_CHECK_THROW(handler.addCommand("123456789012345678901234567890123456789012345678901"),
                             std::exception);
     }
@@ -234,14 +228,7 @@ BOOST_AUTO_TEST_SUITE(test_handler)
 
     BOOST_AUTO_TEST_CASE(error_set_N)
     {
-        Handler handler;
-        BOOST_CHECK_THROW(handler.addCommand("cmd1"),std::exception);
-        handler.setN(5);
-        handler.addCommand("cmd1");
-        handler.addCommand("cmd2");
-        handler.addCommand("cmd3");
-        handler.addCommand("cmd4");
-        BOOST_CHECK_THROW(handler.setN(3),std::exception);
+        BOOST_CHECK_THROW(Handler handler(-1),std::exception);
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -251,13 +238,12 @@ BOOST_AUTO_TEST_SUITE(test_handler)
         std::stringbuf out_buffer;
         std::ostream out_stream(&out_buffer);
 
-        auto handler = std::make_shared<Handler>();
+        auto handler = std::make_shared<Handler>(2);
         auto consoleWriter = std::make_shared<ConsoleWriter>(out_stream);
         auto fileWriter = std::make_shared<FileWriter>();
         consoleWriter->subscribe(handler);
         fileWriter->subscribe(handler);
         
-        handler->setN(2);
         handler->addCommand("");
         handler->addCommand("");
         handler->stop();
@@ -282,13 +268,12 @@ BOOST_AUTO_TEST_SUITE(test_handler)
         std::stringbuf out_buffer;
         std::ostream out_stream(&out_buffer);
 
-        auto handler = std::make_shared<Handler>();
+        auto handler = std::make_shared<Handler>(2);
         auto consoleWriter = std::make_shared<ConsoleWriter>(out_stream);
         auto fileWriter = std::make_shared<FileWriter>();
         consoleWriter->subscribe(handler);
         fileWriter->subscribe(handler);
         
-        handler->setN(2);
         handler->addCommand("{");
         handler->addCommand("}");
         handler->stop();
@@ -312,11 +297,10 @@ BOOST_AUTO_TEST_SUITE(test_handler)
         std::stringbuf out_buffer;
         std::ostream out_stream(&out_buffer);
 
-        auto handler = std::make_shared<Handler>();
+        auto handler = std::make_shared<Handler>(2);
         auto consoleWriter = std::make_shared<ConsoleWriter>(out_stream);
         consoleWriter->subscribe(handler);
         
-        handler->setN(2);
         handler->addCommand("cmd1");
         handler->addCommand("{");
         handler->addCommand("}");

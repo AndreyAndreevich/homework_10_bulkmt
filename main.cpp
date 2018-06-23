@@ -10,8 +10,7 @@ int main(int argc, char *argv[])
   auto file1_counter = std::make_shared<Counter>("file1");
   auto file2_counter = std::make_shared<Counter>("file2");
   try {
-    auto N = start_parsing(argc,argv);
-    auto handler = std::make_shared<Handler>();
+    auto handler = std::make_shared<Handler>(start_parsing(argc,argv));
     auto console_writer = std::make_shared<ConsoleWriter>();
     auto file1_writer = std::make_shared<FileWriter>();
     auto file2_writer = std::make_shared<FileWriter>();
@@ -21,8 +20,7 @@ int main(int argc, char *argv[])
     file2_writer->setCounter(file2_counter);
     console_writer->subscribe(handler);
     file1_writer->subscribe(handler);
-    file2_writer->subscribe(handler);
-    handler->setN(N);   
+    file2_writer->subscribe(handler);  
     std::string line;
     while (std::getline(std::cin, line)) {
       handler->addCommand(line);
