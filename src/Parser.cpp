@@ -17,7 +17,7 @@ BlockParser::Block BlockParser::parsing(const std::string& line) {
   if (line.size() == 0) 
     return Block::Command;
 
-  if (line.find("{") != std::string::npos && line.size() == 1) {
+  if (line == "{") {
     blocks_count++;
     if (blocks_count > 1) 
       return Block::Empty;
@@ -25,7 +25,7 @@ BlockParser::Block BlockParser::parsing(const std::string& line) {
       return Block::StartBlock;
   }
 
-  if(line.find("}") != std::string::npos && line.size() == 1) {
+  if(line == "}") {
     if (blocks_count == 0) 
       return Block::Command;
 
