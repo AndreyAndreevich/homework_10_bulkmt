@@ -21,6 +21,7 @@ class Handler : public Statistics, public std::enable_shared_from_this<Handler> 
   std::shared_ptr<Commands> commands;
   BlockParser parser;
   int N = 0;
+  int max_size_commad = 50;
 
   int job_count;
   std::condition_variable cv;

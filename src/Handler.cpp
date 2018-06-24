@@ -104,7 +104,7 @@ void Handler::subscribe(const std::weak_ptr<Observer>& obs) {
 }
 
 void Handler::addCommand(const std::string& command) { 
-  if (command.size() > 50) {
+  if (command.size() > max_size_commad) {
     throw std::runtime_error("very large string");
   }
   
@@ -127,7 +127,7 @@ void Handler::addCommand(const std::string& command) {
 
     case BlockParser::CancelBlock:
       N = commands->size();
-      if (N == 0) N = 1;
+      if (N == 0) throw std::runtime_error("emty block");
       break;
 
     case BlockParser::Command:

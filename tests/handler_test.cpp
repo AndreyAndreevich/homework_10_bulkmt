@@ -220,8 +220,9 @@ BOOST_AUTO_TEST_SUITE(test_handler)
     BOOST_AUTO_TEST_CASE(large_string)
     {
         Handler handler(4);
-        BOOST_CHECK_THROW(handler.addCommand("123456789012345678901234567890123456789012345678901"),
-                            std::exception);
+        std::string command("123456789012345678901234567890123456789012345678901");
+        assert(command.size() == 51);
+        BOOST_CHECK_THROW(handler.addCommand(command),std::exception);
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -275,7 +276,6 @@ BOOST_AUTO_TEST_SUITE(test_handler)
         fileWriter->subscribe(handler);
         
         handler->addCommand("{");
-        handler->addCommand("}");
         handler->stop();
 
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -303,13 +303,7 @@ BOOST_AUTO_TEST_SUITE(test_handler)
         
         handler->addCommand("cmd1");
         handler->addCommand("{");
-        handler->addCommand("}");
-        handler->addCommand("cmd2");
-        handler->stop();
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
-        BOOST_CHECK_EQUAL(out_buffer.str(),"bulk: cmd1\nbulk: cmd2\n");
+        BOOST_CHECK_THROW(handler->addCommand("}"),std::exception);
     }
 
 BOOST_AUTO_TEST_SUITE_END()
