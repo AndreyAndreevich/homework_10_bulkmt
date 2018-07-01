@@ -1,8 +1,8 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/mpl/assert.hpp>
 
-#include "../src/Handler.h"
-#include "../src/Writers.h"
+#include "Handler.h"
+#include "Writers.h"
 
 using Commands = std::vector<std::string>;
 

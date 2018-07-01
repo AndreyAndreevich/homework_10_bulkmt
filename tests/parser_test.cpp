@@ -2,7 +2,7 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/mpl/assert.hpp>
 
-#include "../src/Parser.h"
+#include "Parser.h"
 
 BOOST_AUTO_TEST_SUITE(test_parser)
 

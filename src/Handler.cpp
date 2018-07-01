@@ -3,19 +3,27 @@
 
 #include <algorithm>
 
-Handler::Handler(const int& n) {
-  if (n <= 0) {
-    throw std::runtime_error("error set N"); 
-  } 
-  N = n;
-  commands = std::make_shared<Commands>();
-  error.first = false;
+Handler::Handler(const int& n) : one_of(true) {
+  initialization(n);
+}
+
+Handler::Handler(const int& n, bool one_of_) : one_of(one_of_) {
+  initialization(n);
 }
 
 Handler::~Handler() {
   for (auto& writer : writers) {
     writer.second->unlock();
   }
+}
+
+void Handler::initialization(const int& n) {
+  if (n <= 0) {
+    throw std::runtime_error("error set N"); 
+  } 
+  N = n;
+  commands = std::make_shared<Commands>();
+  error.first = false;
 }
 
 void Handler::print() {
@@ -63,7 +71,7 @@ void Handler::subscribe(const std::weak_ptr<Observer>& obs) {
   auto mtx = std::make_shared<std::mutex>();
   mtx->lock();
   writers.emplace_back(obs,mtx);
-  std::thread([obs,mtx](std::weak_ptr<Handler> handler){
+  std::thread([obs,mtx](std::weak_ptr<Handler> handler, bool one_of){
     try {
       while(true) { 
         mtx->lock();
@@ -73,7 +81,7 @@ void Handler::subscribe(const std::weak_ptr<Observer>& obs) {
           if (obs.expired() || handler.expired()) {
             break;
           }
-          if (typeid(FileWriter) == typeid(*observer_ptr)) {
+          if (typeid(FileWriter) == typeid(*observer_ptr) && one_of) {
             std::lock_guard<std::mutex> lk(handler_ptr->one_of_mtx);
             if (handler_ptr->one_of_print) {
               handler_ptr->one_of_print = false;
@@ -100,7 +108,7 @@ void Handler::subscribe(const std::weak_ptr<Observer>& obs) {
         handler_ptr->unlock();
       }
     }
-  },shared_from_this()).detach();
+  },shared_from_this(),one_of).detach();
 }
 
 void Handler::addCommand(const std::string& command) { 

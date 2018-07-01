@@ -27,18 +27,22 @@ class Handler : public Statistics, public std::enable_shared_from_this<Handler> 
   std::condition_variable cv;
   std::mutex mtx;
 
+  bool one_of = true;
   std::atomic<bool> one_of_print;
   std::mutex one_of_mtx;
 
   std::pair<bool,std::string> error;
   std::mutex error_mtx;
 
+private:
+  void initialization(const int& n);
 protected:
   void print();
   void update();
   void unlock();
 public:
   Handler(const int& n);
+  Handler(const int& n, bool);
   ~Handler();
   void subscribe(const std::weak_ptr<Observer>& obs);
   void addCommand(const std::string& command);

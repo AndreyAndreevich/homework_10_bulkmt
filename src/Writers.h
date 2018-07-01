@@ -24,11 +24,12 @@ class FileWriter : public Observer, public Statistics {
   int section = 0;
   std::ofstream file;
   std::time_t time;
+protected:
   std::string name;
 public:
   FileWriter();
   void update(const std::weak_ptr<Commands>& commands) override;
-  void print() override;
+  virtual void print() override;
   std::string getName();
   std::time_t getTime();
 };
