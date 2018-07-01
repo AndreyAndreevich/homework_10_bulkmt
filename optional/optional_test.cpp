@@ -15,7 +15,6 @@ struct TestFileFriter : FileWriter {
     std::iota(v.begin(),v.end(), 0);
   }
   void print() override {
-    int a = 5;
     for (int i = 0; i < repeat; i++) {
       std::random_shuffle(v.begin(),v.end());
       std::sort(v.begin(),v.end());
